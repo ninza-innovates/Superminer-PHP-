@@ -1,0 +1,10 @@
+RewriteEngine On
+RewriteBase /superminer/public/
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php?url=$1 [QSA,L]
+
+<FilesMatch "\.(env|json)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>

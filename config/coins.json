@@ -1,0 +1,52 @@
+{
+    "Grin-CT32": {
+        "link": "https:\/\/whattomine.com\/coins\/324-grin-cuckatoo32",
+        "profitability": "33.36358",
+        "difficulty": 309855.1384277344
+    },
+    "Firo": {
+        "link": "https:\/\/whattomine.com\/coins\/175-firo-firopow",
+        "profitability": "1.2869",
+        "difficulty": 345.467948849947
+    },
+    "Ravencoin": {
+        "link": "https:\/\/whattomine.com\/coins\/234-rvn-kawpow",
+        "profitability": "64.30536",
+        "difficulty": 64754.42149383349
+    },
+    "Nicehash-KawPow": {
+        "link": "https:\/\/whattomine.com\/coins\/45-nicehash-kawpow",
+        "profitability": "0.00001",
+        "difficulty": 1
+    },
+    "Nicehash-Octopus": {
+        "link": "https:\/\/whattomine.com\/coins\/47-nicehash-octopus",
+        "profitability": "0.00001",
+        "difficulty": 1
+    },
+    "Zano": {
+        "link": "https:\/\/whattomine.com\/coins\/330-zano-progpowz",
+        "profitability": "0.10152",
+        "difficulty": 67848771804758
+    },
+    "Quai": {
+        "link": "https:\/\/whattomine.com\/coins\/443-quai-progpow",
+        "profitability": "9.34295",
+        "difficulty": 6295301910460
+    },
+    "Conflux": {
+        "link": "https:\/\/whattomine.com\/coins\/337-cfx-octopus",
+        "profitability": "12.12559",
+        "difficulty": 1595130248331
+    },
+    "Nicehash-ZelHash": {
+        "link": "https:\/\/whattomine.com\/coins\/49-nicehash-zelhash",
+        "profitability": "0.00001",
+        "difficulty": 1
+    },
+    "Cortex": {
+        "link": "https:\/\/whattomine.com\/coins\/329-ctxc-cortex",
+        "profitability": "11.41017",
+        "difficulty": 257460
+    }
+}
