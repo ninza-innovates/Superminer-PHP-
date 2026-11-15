@@ -43,6 +43,12 @@ To run the same syntax check as CI:
 find . -path './.git' -prune -o -type f -name '*.php' -print0 | xargs -0 -n1 php -l
 ```
 
+CI also runs a form test that the ROI result keeps the submitted coin and inputs:
+
+```bash
+php tests/calculator_form_test.php
+```
+
 ## Configuration
 
 `includes/config.php` reads a project-root `.env` (INI format, no sections). Copy `.env.example` and keep all five keys. Missing keys make those constants fail at startup.
