@@ -32,3 +32,6 @@ jobs:
             exit 1
           fi
           exit "$failed"
+
+      - name: Calculator form test
+        run: php tests/calculator_form_test.php

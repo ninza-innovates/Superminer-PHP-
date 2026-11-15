@@ -8,13 +8,24 @@ $coins = json_decode(file_get_contents(CONFIG_DIR . '/coins.json'), true);
 
 $result = '';
 $breakEven = '';
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $hashRate = floatval($_POST['hashRate']);
-    $powerCost = floatval($_POST['powerCost']);
-    $powerUsage = floatval($_POST['powerUsage']);
-    $coin = $_POST['coin'];
-    $hardwareCost = floatval($_POST['hardwareCost']);
-    $profitPerDay = $coins[$coin]['profitability'] ?? 0;
+$isPost = ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST';
+$fields = [
+    'coin' => '',
+    'hashRate' => '',
+    'powerCost' => '',
+    'powerUsage' => '',
+    'hardwareCost' => '',
+];
+if ($isPost) {
+    foreach ($fields as $name => $_) {
+        $raw = $_POST[$name] ?? '';
+        $fields[$name] = is_string($raw) ? $raw : '';
+    }
+    $hashRate = floatval($fields['hashRate']);
+    $powerCost = floatval($fields['powerCost']);
+    $powerUsage = floatval($fields['powerUsage']);
+    $hardwareCost = floatval($fields['hardwareCost']);
+    $profitPerDay = $coins[$fields['coin']]['profitability'] ?? 0;
     $result = calculateROI($hashRate, $powerCost, $powerUsage, $profitPerDay);
     if ($hardwareCost > 0 && $result > 0) {
         $breakEven = round($hardwareCost / $result, 1);
@@ -69,25 +80,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <label for="coin" class="form-label fw-bold text-secondary">Coin</label>
                         <select name="coin" id="coin" class="form-select" required>
                             <?php foreach ($coins as $coin => $data): ?>
-                                <option data-href="<?php echo $data['link'] ?? "#"; ?>" value="<?php echo htmlspecialchars($coin); ?>" data-profitability="<?php echo $data['profitability']; ?>"><?php echo htmlspecialchars($coin); ?></option>
+                                <option data-href="<?php echo $data['link'] ?? "#"; ?>" value="<?php echo htmlspecialchars($coin); ?>" data-profitability="<?php echo $data['profitability']; ?>"<?php echo $fields['coin'] === $coin ? ' selected' : ''; ?>><?php echo htmlspecialchars($coin); ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
                     <div class="col-md-6">
                         <label for="hashRate" class="form-label fw-bold text-secondary">Hash Rate (MH/s)</label>
-                        <input type="number" name="hashRate" id="hashRate" class="form-control" step="0.1" required>
+                        <input type="number" name="hashRate" id="hashRate" class="form-control" step="0.1" required value="<?php echo htmlspecialchars($fields['hashRate'], ENT_QUOTES); ?>">
                     </div>
                     <div class="col-md-6">
                         <label for="powerCost" class="form-label fw-bold text-secondary">Power Cost ($/kWh)</label>
-                        <input type="number" name="powerCost" id="powerCost" class="form-control" step="0.01" required>
+                        <input type="number" name="powerCost" id="powerCost" class="form-control" step="0.01" required value="<?php echo htmlspecialchars($fields['powerCost'], ENT_QUOTES); ?>">
                     </div>
                     <div class="col-md-6">
                         <label for="powerUsage" class="form-label fw-bold text-secondary">Power Usage (W)</label>
-                        <input type="number" name="powerUsage" id="powerUsage" class="form-control" required>
+                        <input type="number" name="powerUsage" id="powerUsage" class="form-control" required value="<?php echo htmlspecialchars($fields['powerUsage'], ENT_QUOTES); ?>">
                     </div>
                     <div class="col-md-6">
                         <label for="hardwareCost" class="form-label fw-bold text-secondary">Hardware Cost ($)</label>
-                        <input type="number" name="hardwareCost" id="hardwareCost" class="form-control" step="0.01" required>
+                        <input type="number" name="hardwareCost" id="hardwareCost" class="form-control" step="0.01" required value="<?php echo htmlspecialchars($fields['hardwareCost'], ENT_QUOTES); ?>">
                     </div>
                     <div class="col-12 text-center">
                         <button type="submit" class="btn btn-primary btn-lg cta-btn">Calculate</button>
