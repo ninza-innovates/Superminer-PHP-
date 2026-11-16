@@ -1,5 +1,7 @@
 # SuperMiner.com MVP
 
+PHP pages in `public/` list the top mining coins and estimate hardware ROI.
+
 ## Setup Steps
 1. **Environment**: Deploy in the provided container at `/var/www/html/superminer`.
 2. **Dependencies**:
@@ -7,14 +9,15 @@
    - Bootstrap 5 is loaded from a CDN by the pages in `public/`.
 3. **Configuration**:
    - Copy `.env.example` to `.env` and adjust the values in [Configuration](#configuration).
-   - Keep `.env` out of the web root; `public/.htaccess` already denies `.env` and `.json`.
+   - Keep `.env` out of the web root. On Apache, `public/.htaccess` denies files ending in `.env` or `.json`. The built-in server ignores `.htaccess`; `-t public` still cannot serve the project-root `.env`.
 4. **Data**:
    - Open the home page or `/api/coins.php` to refresh `config/coins.json`. See [Run locally](#run-locally).
-   - Update `config/hardware.json` with additional GPU/ASIC specs as needed.
-5. **Deployment**:
-   - Place files in `/var/www/html/superminer`.
-   - Test via container’s SSH access.
-6. **Branding**: Logos and favicon in `/public/assets/logo/`.
+   - `config/hardware.json` lists sample GPU and ASIC hash rates and wattage. The calculator uses those rows as presets. Add a row to offer another machine.
+5. **Web server**:
+   - Serve the `public/` directory. Page links are relative (`./` and `calculator.php`), so they stay inside that directory when it is the document root and when the app is mounted at `/superminer/public/`.
+   - Apache, project tree at `/var/www/html/superminer`: open `/superminer/public/`. `public/.htaccess` sets `RewriteBase /superminer/public/` for that prefix.
+   - Apache with `DocumentRoot` pointed at `public/`: change that `RewriteBase` to `/`.
+6. **Branding**: The logo and the favicon are both `public/assets/logo/superminer.jpg`.
 
 ## Run locally
 
@@ -27,12 +30,12 @@ cp .env.example .env
 php -S localhost:8080 -t public
 ```
 
-`public/` is the document root, so the header links `/` and `/calculator.php` resolve to files in that directory.
+`public/` is the document root. Header links are `./` and `calculator.php`, so they resolve to files in that directory.
 
 | URL | What it does |
 | --- | --- |
 | http://localhost:8080/ | Top 10 coins. Reuses `config/coins.json` while the file is under 60 seconds old. After that, `fetchMiningData()` refreshes it from `API_WHATTOMINE_URL`. |
-| http://localhost:8080/calculator.php | ROI form. Reads `config/coins.json` and `config/hardware.json`, then prints estimated daily profit after you submit. |
+| http://localhost:8080/calculator.php | ROI form. Profitability comes from `config/coins.json`. A hardware preset fills hash rate and watts from `config/hardware.json`. Submit to print estimated daily profit. |
 | http://localhost:8080/api/coins.php | Forces a refresh and returns JSON with `data` and `timestamp`. |
 
 `includes/api.php` defines `fetchMiningData()`. Executing that file on its own loads the function and exits. Refresh the cache by opening the home page or `/api/coins.php`. When the WhatToMine request fails or returns a status other than 200, the function writes a small built-in coin list into `config/coins.json`.
@@ -43,7 +46,7 @@ To run the same syntax check as CI:
 find . -path './.git' -prune -o -type f -name '*.php' -print0 | xargs -0 -n1 php -l
 ```
 
-CI also runs a form test that the ROI result keeps the submitted coin and inputs:
+CI also runs a form test that the ROI result keeps the submitted coin, inputs, and hardware preset:
 
 ```bash
 php tests/calculator_form_test.php
@@ -63,4 +66,4 @@ php tests/calculator_form_test.php
 
 The example uses public WhatToMine and NiceHash URLs and plain store homepages. Replace the affiliate values with your own links. Do not commit `.env`.
 
-`config/coins.json` is the cache written by `includes/api.php` (60-second TTL). `config/hardware.json` lists sample GPU and ASIC hash rate and wattage; the calculator reads `config/coins.json` for profitability.
+`config/coins.json` is the cache written by `includes/api.php` (60-second TTL). `config/hardware.json` lists sample GPU and ASIC hash rate and wattage. Choosing a preset on the calculator copies those two numbers into the form; profitability still comes from `config/coins.json`.

@@ -71,6 +71,12 @@ $fresh = render_calculator();
 assert_true(strpos($fresh, 'ROI Calculator') !== false, 'GET did not render the calculator');
 assert_true(strpos($fresh, 'Estimated Daily Profit') === false, 'GET rendered a profit result');
 assert_true(strpos($fresh, ' selected') === false, 'GET marked a coin selected');
+assert_true(strpos($fresh, 'href="./"') !== false, 'home link should be relative');
+assert_true(strpos($fresh, 'href="/calculator.php"') === false, 'calculator link should stay relative');
+assert_true(strpos($fresh, 'href="calculator.php"') !== false, 'calculator link missing');
+assert_true(strpos($fresh, 'id="hardware"') !== false, 'GET missing hardware preset');
+assert_true(strpos($fresh, 'data-hash-rate="100"') !== false, 'preset missing RTX 3080 hash rate');
+assert_true(strpos($fresh, 'data-power-usage="320"') !== false, 'preset missing RTX 3080 power');
 foreach (['hashRate', 'powerCost', 'powerUsage', 'hardwareCost'] as $id) {
     $tag = input_tag($fresh, $id);
     assert_true($tag !== '' && strpos($tag, 'value=""') !== false, "GET {$id} should be empty");
@@ -83,6 +89,7 @@ $breakEven = ($daily > 0) ? round(500 / $daily, 1) : '';
 $_SERVER['REQUEST_METHOD'] = 'POST';
 $_POST = [
     'coin' => $coin,
+    'hardware' => 'AMD RX 6800',
     'hashRate' => '100',
     'powerCost' => '0.1',
     'powerUsage' => '320',
@@ -98,6 +105,10 @@ $selected = option_tag($posted, $coin);
 assert_true($selected !== '' && strpos($selected, ' selected') !== false, "posted coin {$coin} is not selected");
 $first = option_tag($posted, $names[0]);
 assert_true($first !== '' && strpos($first, ' selected') === false, "first coin {$names[0]} should not be selected");
+$preset = option_tag($posted, 'AMD RX 6800');
+assert_true($preset !== '' && strpos($preset, ' selected') !== false, 'posted hardware preset is not selected');
+$firstPreset = option_tag($posted, 'NVIDIA RTX 3080');
+assert_true($firstPreset !== '' && strpos($firstPreset, ' selected') === false, 'first hardware preset should not be selected');
 foreach (['hashRate' => '100', 'powerCost' => '0.1', 'powerUsage' => '320', 'hardwareCost' => '500'] as $id => $value) {
     $tag = input_tag($posted, $id);
     assert_true($tag !== '' && strpos($tag, 'value="' . $value . '"') !== false, "{$id} did not keep {$value}");
