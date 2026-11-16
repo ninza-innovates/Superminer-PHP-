@@ -4,6 +4,9 @@ require_once '../includes/config.php';
 require_once '../includes/functions.php';
 
 $hardware = json_decode(file_get_contents(CONFIG_DIR . '/hardware.json'), true);
+if (!is_array($hardware)) {
+    $hardware = [];
+}
 $coins = json_decode(file_get_contents(CONFIG_DIR . '/coins.json'), true);
 
 $result = '';
@@ -11,6 +14,7 @@ $breakEven = '';
 $isPost = ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST';
 $fields = [
     'coin' => '',
+    'hardware' => '',
     'hashRate' => '',
     'powerCost' => '',
     'powerUsage' => '',
@@ -45,16 +49,16 @@ if ($isPost) {
 </head>
 <body>
     <header class="hero-section text-white" id="site-header">
-        <a href="/" class="d-inline-flex align-items-center text-decoration-none text-white gap-3">
+        <a href="./" class="d-inline-flex align-items-center text-decoration-none text-white gap-3">
             <img src="assets/logo/superminer.jpg" alt="SuperMiner.com Logo" class="logo-glow" style="width: 56px; height: 56px; border-radius: 50%">
             <h2 class="fs-2 fw-bold d-sm-flex d-none">SuperMiner.com</h2>
         </a>
         <ul class="nav fs-6 header-nav d-lg-flex d-none">
             <li class="nav-item">
-                <a class="nav-link" href="/">Top 10 Coins</a>
+                <a class="nav-link" href="./">Top 10 Coins</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link active" href="/calculator.php">ROI Calculator</a>
+                <a class="nav-link active" href="calculator.php">ROI Calculator</a>
             </li>
         </ul>
         <div class="dropdown d-md-flex d-lg-none">
@@ -64,8 +68,8 @@ if ($isPost) {
                 </svg>
             </a>
             <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="/">Top 10 Coins</a></li>
-                <li><a class="dropdown-item active" href="/calculator.php">ROI Calculator</a></li>
+                <li><a class="dropdown-item" href="./">Top 10 Coins</a></li>
+                <li><a class="dropdown-item active" href="calculator.php">ROI Calculator</a></li>
             </ul>
         </div>
     </header>
@@ -81,6 +85,15 @@ if ($isPost) {
                         <select name="coin" id="coin" class="form-select" required>
                             <?php foreach ($coins as $coin => $data): ?>
                                 <option data-href="<?php echo $data['link'] ?? "#"; ?>" value="<?php echo htmlspecialchars($coin); ?>" data-profitability="<?php echo $data['profitability']; ?>"<?php echo $fields['coin'] === $coin ? ' selected' : ''; ?>><?php echo htmlspecialchars($coin); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="hardware" class="form-label fw-bold text-secondary">Hardware preset</label>
+                        <select name="hardware" id="hardware" class="form-select">
+                            <option value="">Custom</option>
+                            <?php foreach ($hardware as $name => $spec): ?>
+                                <option value="<?php echo htmlspecialchars($name, ENT_QUOTES); ?>" data-hash-rate="<?php echo htmlspecialchars((string) ($spec['hashRate'] ?? ''), ENT_QUOTES); ?>" data-power-usage="<?php echo htmlspecialchars((string) ($spec['powerUsage'] ?? ''), ENT_QUOTES); ?>"<?php echo $fields['hardware'] === $name ? ' selected' : ''; ?>><?php echo htmlspecialchars($name); ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>

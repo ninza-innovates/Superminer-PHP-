@@ -19,16 +19,16 @@ $coins = fetchMiningData();
     </head>
     <body>
         <header class="hero-section text-white" id="site-header">
-            <a href="/" class="d-inline-flex align-items-center text-decoration-none text-white gap-3">
+            <a href="./" class="d-inline-flex align-items-center text-decoration-none text-white gap-3">
                 <img src="assets/logo/superminer.jpg" alt="SuperMiner.com Logo" class="logo-glow" style="width: 56px; height: 56px; border-radius: 50%">
                 <h2 class="fs-2 fw-bold d-sm-flex d-none">SuperMiner.com</h2>
             </a>
             <ul class="nav fs-6 header-nav d-lg-flex d-none">
                 <li class="nav-item">
-                    <a class="nav-link active" href="/">Top 10 Coins</a>
+                    <a class="nav-link active" href="./">Top 10 Coins</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/calculator.php">ROI Calculator</a>
+                    <a class="nav-link" href="calculator.php">ROI Calculator</a>
                 </li>
             </ul>
             <div class="dropdown d-md-flex d-lg-none">
@@ -38,8 +38,8 @@ $coins = fetchMiningData();
                     </svg>
                 </a>
                 <ul class="dropdown-menu">
-                    <li><a class="dropdown-item active" href="/">Top 10 Coins</a></li>
-                    <li><a class="dropdown-item" href="/calculator.php">ROI Calculator</a></li>
+                    <li><a class="dropdown-item active" href="./">Top 10 Coins</a></li>
+                    <li><a class="dropdown-item" href="calculator.php">ROI Calculator</a></li>
                 </ul>
             </div>
         </header>

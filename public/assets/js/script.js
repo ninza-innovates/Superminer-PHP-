@@ -90,6 +90,21 @@ document.addEventListener('DOMContentLoaded', function () {
     updateCoinData(); // Initial update
     setInterval(updateCoinData, 60000);
     
+    const hardwareSelect = document.getElementById('hardware');
+    if (hardwareSelect) {
+        hardwareSelect.addEventListener('change', function () {
+            const option = this.options[this.selectedIndex];
+            const hashRate = option.getAttribute('data-hash-rate');
+            const powerUsage = option.getAttribute('data-power-usage');
+            if (hashRate) {
+                document.getElementById('hashRate').value = hashRate;
+            }
+            if (powerUsage) {
+                document.getElementById('powerUsage').value = powerUsage;
+            }
+        });
+    }
+
     const coinSelector = document.getElementById('coin');
     const selectedOption = coinSelector?.options[coinSelector.selectedIndex];
     if (selectedOption) {
