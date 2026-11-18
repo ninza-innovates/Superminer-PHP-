@@ -34,7 +34,7 @@ php -S localhost:8080 -t public
 
 | URL | What it does |
 | --- | --- |
-| http://localhost:8080/ | Top 10 coins. Reuses `config/coins.json` while the file is under 60 seconds old. After that, `fetchMiningData()` refreshes it from `API_WHATTOMINE_URL`. |
+| http://localhost:8080/ | Top 10 coins, ranked by the WhatToMine profitability score. Reuses `config/coins.json` while the file is under 60 seconds old. After that, `fetchMiningData()` refreshes it from `API_WHATTOMINE_URL`. |
 | http://localhost:8080/calculator.php | ROI form. Profitability comes from `config/coins.json`. A hardware preset fills hash rate and watts from `config/hardware.json`. Submit to print estimated daily profit. |
 | http://localhost:8080/api/coins.php | Forces a refresh and returns JSON with `data` and `timestamp`. |
 
@@ -50,6 +50,12 @@ CI also runs a form test that the ROI result keeps the submitted coin, inputs, a
 
 ```bash
 php tests/calculator_form_test.php
+```
+
+CI also checks that a refresh keeps the ten highest WhatToMine profitability scores:
+
+```bash
+php tests/top_coins_test.php
 ```
 
 ## Configuration

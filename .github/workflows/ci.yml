@@ -35,3 +35,6 @@ jobs:
 
       - name: Calculator form test
         run: php tests/calculator_form_test.php
+
+      - name: Top coins ranking test
+        run: php tests/top_coins_test.php
