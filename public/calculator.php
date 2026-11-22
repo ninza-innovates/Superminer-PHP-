@@ -2,6 +2,7 @@
 // /var/www/html/superminer/public/calculator.php
 require_once '../includes/config.php';
 require_once '../includes/functions.php';
+require_once '../includes/html.php';
 
 $hardware = json_decode(file_get_contents(CONFIG_DIR . '/hardware.json'), true);
 if (!is_array($hardware)) {
@@ -84,7 +85,14 @@ if ($isPost) {
                         <label for="coin" class="form-label fw-bold text-secondary">Coin</label>
                         <select name="coin" id="coin" class="form-select" required>
                             <?php foreach ($coins as $coin => $data): ?>
-                                <option data-href="<?php echo $data['link'] ?? "#"; ?>" value="<?php echo htmlspecialchars($coin); ?>" data-profitability="<?php echo $data['profitability']; ?>"<?php echo $fields['coin'] === $coin ? ' selected' : ''; ?>><?php echo htmlspecialchars($coin); ?></option>
+                                <?php
+                                $coinLink = httpUrlOrHash(is_array($data) ? ($data['link'] ?? null) : null);
+                                $coinProfit = '';
+                                if (is_array($data) && isset($data['profitability']) && is_scalar($data['profitability'])) {
+                                    $coinProfit = (string) $data['profitability'];
+                                }
+                                ?>
+                                <option data-href="<?php echo htmlspecialchars($coinLink, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); ?>" value="<?php echo htmlspecialchars($coin); ?>" data-profitability="<?php echo htmlspecialchars($coinProfit, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); ?>"<?php echo $fields['coin'] === $coin ? ' selected' : ''; ?>><?php echo htmlspecialchars($coin); ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>

@@ -52,6 +52,12 @@ CI also runs a form test that the ROI result keeps the submitted coin, inputs, a
 php tests/calculator_form_test.php
 ```
 
+CI also checks that coin links stay on http(s) and that calculator profitability attributes are escaped:
+
+```bash
+php tests/coin_link_test.php
+```
+
 CI also checks that a refresh keeps the ten highest WhatToMine profitability scores:
 
 ```bash
