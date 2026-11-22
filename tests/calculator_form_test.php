@@ -121,6 +121,42 @@ assert_true(
     strpos($hashTag, 'value="1&quot;&gt;&lt;script&gt;"') !== false,
     'hashRate quote was not escaped'
 );
+assert_true(strpos($escaped, 'Estimated Daily Profit') === false, 'non-numeric hash rate still produced a profit');
+assert_true(strpos($escaped, 'Enter a listed coin and positive numbers') !== false, 'non-numeric hash rate did not show an error');
+
+function post_invalid($overrides) {
+    global $coin;
+    $_SERVER['REQUEST_METHOD'] = 'POST';
+    $_POST = [
+        'coin' => $coin,
+        'hardware' => 'AMD RX 6800',
+        'hashRate' => '100',
+        'powerCost' => '0.1',
+        'powerUsage' => '320',
+        'hardwareCost' => '500',
+    ];
+    foreach ($overrides as $name => $value) {
+        $_POST[$name] = $value;
+    }
+    return render_calculator();
+}
+
+$negative = post_invalid(['hashRate' => '-10', 'powerCost' => '0', 'powerUsage' => 'nope']);
+assert_true(strpos($negative, 'Estimated Daily Profit') === false, 'negative hash rate still produced a profit');
+assert_true(strpos($negative, 'Enter a listed coin and positive numbers') !== false, 'invalid numbers did not show an error');
+assert_true(strpos(input_tag($negative, 'hashRate'), 'value="-10"') !== false, 'rejected hash rate was not kept');
+assert_true(strpos(input_tag($negative, 'powerCost'), 'value="0"') !== false, 'rejected power cost was not kept');
+
+$unknown = post_invalid(['coin' => 'Not A Listed Coin']);
+assert_true(strpos($unknown, 'Estimated Daily Profit') === false, 'unknown coin still produced a profit');
+assert_true(strpos($unknown, 'Enter a listed coin and positive numbers') !== false, 'unknown coin did not show an error');
+
+assert_true(positiveCalculatorNumber('1e2') === 100.0, 'scientific notation should stay a positive number');
+assert_true(positiveCalculatorNumber('INF') === null, 'non-finite numbers should be rejected');
+assert_true(positiveCalculatorNumber('  ') === null, 'blank numbers should be rejected');
+assert_true(calculatorCoinProfit(['Missing' => ['difficulty' => 1]], 'Missing') === null, 'coin without profitability should be rejected');
+assert_true(calculatorCoinProfit(['Zero' => ['profitability' => '0']], 'Zero') === 0.0, 'a listed zero reward is still a number');
+assert_true(readConfigJson($root . '/config/does-not-exist.json') === [], 'missing config JSON should be an empty list');
 
 if ($failed) {
     exit(1);

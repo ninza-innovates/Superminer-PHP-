@@ -3,14 +3,12 @@
 require_once '../includes/config.php';
 require_once '../includes/functions.php';
 
-$hardware = json_decode(file_get_contents(CONFIG_DIR . '/hardware.json'), true);
-if (!is_array($hardware)) {
-    $hardware = [];
-}
-$coins = json_decode(file_get_contents(CONFIG_DIR . '/coins.json'), true);
+$hardware = readConfigJson(CONFIG_DIR . '/hardware.json');
+$coins = readConfigJson(CONFIG_DIR . '/coins.json');
 
 $result = '';
 $breakEven = '';
+$error = '';
 $isPost = ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST';
 $fields = [
     'coin' => '',
@@ -25,14 +23,18 @@ if ($isPost) {
         $raw = $_POST[$name] ?? '';
         $fields[$name] = is_string($raw) ? $raw : '';
     }
-    $hashRate = floatval($fields['hashRate']);
-    $powerCost = floatval($fields['powerCost']);
-    $powerUsage = floatval($fields['powerUsage']);
-    $hardwareCost = floatval($fields['hardwareCost']);
-    $profitPerDay = $coins[$fields['coin']]['profitability'] ?? 0;
-    $result = calculateROI($hashRate, $powerCost, $powerUsage, $profitPerDay);
-    if ($hardwareCost > 0 && $result > 0) {
-        $breakEven = round($hardwareCost / $result, 1);
+    $hashRate = positiveCalculatorNumber($fields['hashRate']);
+    $powerCost = positiveCalculatorNumber($fields['powerCost']);
+    $powerUsage = positiveCalculatorNumber($fields['powerUsage']);
+    $hardwareCost = positiveCalculatorNumber($fields['hardwareCost']);
+    $profitPerDay = calculatorCoinProfit($coins, $fields['coin']);
+    if ($hashRate === null || $powerCost === null || $powerUsage === null || $hardwareCost === null || $profitPerDay === null) {
+        $error = 'Enter a listed coin and positive numbers for hash rate, power cost, power usage, and hardware cost.';
+    } else {
+        $result = calculateROI($hashRate, $powerCost, $powerUsage, $profitPerDay);
+        if ($result > 0) {
+            $breakEven = round($hardwareCost / $result, 1);
+        }
     }
 }
 ?>
@@ -118,6 +120,11 @@ if ($isPost) {
                         <a href="#" target="_blank" class="btn btn-secondary btn-lg explorer-btn" id="explorer_btn">Explorer</a>
                     </div>
                 </form>
+                <?php if ($error !== ''): ?>
+                    <div class="alert alert-danger mt-4 text-center" role="alert">
+                        <?php echo htmlspecialchars($error); ?>
+                    </div>
+                <?php endif; ?>
                 <?php if ($result !== ''): ?>
                     <div class="alert alert-success mt-4 text-center">
                         <h5>Estimated Daily Profit: <span class="fw-bold text-success">$<?php echo $result; ?></span></h5>
