@@ -38,3 +38,6 @@ jobs:
 
       - name: Top coins ranking test
         run: php tests/top_coins_test.php
+
+      - name: Coin link escaping test
+        run: php tests/coin_link_test.php
