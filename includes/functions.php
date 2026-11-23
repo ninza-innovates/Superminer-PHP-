@@ -79,4 +79,30 @@ function calculatorCoinProfit($coins, $coin) {
     }
     return $value;
 }
+
+/**
+ * Format a cached coin stat for the home page.
+ * number_format() throws when profitability or difficulty is not a number,
+ * so those values become null and the page can show a placeholder.
+ *
+ * @param mixed $value
+ * @param int $decimals
+ * @return string|null
+ */
+function formatCoinNumber($value, $decimals) {
+    if (is_string($value)) {
+        $value = trim($value);
+    }
+    if (is_int($value) || is_float($value)) {
+        $number = (float) $value;
+    } elseif (is_string($value) && is_numeric($value)) {
+        $number = (float) $value;
+    } else {
+        return null;
+    }
+    if (!is_finite($number)) {
+        return null;
+    }
+    return number_format($number, (int) $decimals);
+}
 ?>

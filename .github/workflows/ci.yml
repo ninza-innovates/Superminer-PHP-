@@ -41,3 +41,6 @@ jobs:
 
       - name: Coin link escaping test
         run: php tests/coin_link_test.php
+
+      - name: Coin display test
+        run: php tests/coin_display_test.php

@@ -2,9 +2,13 @@
 // /var/www/html/superminer/public/index.php
 require_once '../includes/config.php';
 require_once '../includes/api.php';
+require_once '../includes/functions.php';
 require_once '../includes/html.php';
 
 $coins = fetchMiningData();
+if (!is_array($coins)) {
+    $coins = [];
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -52,13 +56,20 @@ $coins = fetchMiningData();
                 <div class="row g-4" id="coin-summaries">
                     <?php $i = 0; ?>
                     <?php foreach ($coins as $coin => $data): ?>
-                        <?php $i ++; ?>
+                        <?php
+                        if (!is_array($data)) {
+                            continue;
+                        }
+                        $i++;
+                        $profitText = formatCoinNumber($data['profitability'] ?? null, 5);
+                        $difficultyText = formatCoinNumber($data['difficulty'] ?? null, 10);
+                        ?>
                         <div class="col-lg-4 col-md-12">
-                            <a class="card coin-card shadow-sm h-100 text-decoration-none" href="<?php echo htmlspecialchars(httpUrlOrHash(is_array($data) ? ($data['link'] ?? null) : null), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); ?>" target="_blank" rel="noopener noreferrer" data-coin="<?php echo htmlspecialchars($coin); ?>">
+                            <a class="card coin-card shadow-sm h-100 text-decoration-none" href="<?php echo htmlspecialchars(httpUrlOrHash($data['link'] ?? null), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); ?>" target="_blank" rel="noopener noreferrer" data-coin="<?php echo htmlspecialchars($coin); ?>">
                                 <div class="card-body text-center">
                                     <h5 class="card-title text-secondary fw-bold"><?php echo htmlspecialchars($coin); ?></h5>
-                                    <p class="card-text text-muted">Profitability: <span class="text-success fw-bold coin-profitability">$<?php echo number_format($data['profitability'], decimals: 5); ?>/day</span></p>
-                                    <p class="card-text text-muted">Difficulty: <span class="fw-bold coin-difficulty"><?php echo number_format($data['difficulty'], 10); ?></span></p>
+                                    <p class="card-text text-muted">Profitability: <span class="text-success fw-bold coin-profitability"><?php echo $profitText === null ? 'n/a' : '$' . $profitText . '/day'; ?></span></p>
+                                    <p class="card-text text-muted">Difficulty: <span class="fw-bold coin-difficulty"><?php echo $difficultyText === null ? 'n/a' : $difficultyText; ?></span></p>
                                 </div>
                             </a>
                         </div>
