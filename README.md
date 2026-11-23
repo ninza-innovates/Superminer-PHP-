@@ -34,7 +34,7 @@ php -S localhost:8080 -t public
 
 | URL | What it does |
 | --- | --- |
-| http://localhost:8080/ | Top 10 coins, ranked by the WhatToMine profitability score. Reuses `config/coins.json` while the file is under 60 seconds old. After that, `fetchMiningData()` refreshes it from `API_WHATTOMINE_URL`. |
+| http://localhost:8080/ | Top 10 coins, ranked by the WhatToMine profitability score. Reuses `config/coins.json` while the file is under 60 seconds old. After that, `fetchMiningData()` refreshes it from `API_WHATTOMINE_URL`. A fresh cache that does not decode to a coin list renders as an empty list until that refresh. Non-numeric profitability or difficulty shows as n/a. |
 | http://localhost:8080/calculator.php | ROI form. Profitability comes from `config/coins.json`. A hardware preset fills hash rate and watts from `config/hardware.json`. Submit to print estimated daily profit. The server only calculates when the coin is listed and hash rate, power cost, wattage, and hardware cost are positive numbers. |
 | http://localhost:8080/api/coins.php | Forces a refresh and returns JSON with `data` and `timestamp`. |
 
@@ -56,6 +56,12 @@ CI also checks that coin links stay on http(s) and that calculator profitability
 
 ```bash
 php tests/coin_link_test.php
+```
+
+CI also checks that the top-coins page still renders when the cache is invalid or a stat is not numeric:
+
+```bash
+php tests/coin_display_test.php
 ```
 
 CI also checks that a refresh keeps the ten highest WhatToMine profitability scores:

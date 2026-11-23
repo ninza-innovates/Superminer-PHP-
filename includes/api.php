@@ -11,9 +11,13 @@ function fetchMiningData($forceRefresh = false) {
     $cacheFile = CONFIG_DIR . '/coins.json';
     $cacheTime = 60; // 60 seconds cache expiration
 
-    // Check if cache exists and is fresh, unless forcing refresh
+    // Check if cache exists and is fresh, unless forcing refresh.
+    // A fresh file that is not a coin list used to return null and warn on
+    // the home page. Keep the file until the TTL expires, and render nothing.
     if (!$forceRefresh && file_exists($cacheFile) && (time() - filemtime($cacheFile)) < $cacheTime) {
-        return json_decode(file_get_contents($cacheFile), true);
+        $raw = is_readable($cacheFile) ? file_get_contents($cacheFile) : false;
+        $cached = is_string($raw) ? json_decode($raw, true) : null;
+        return is_array($cached) ? $cached : [];
     }
 
     // Fetch from WhatToMine API
