@@ -90,8 +90,8 @@ if (!is_array($coins)) {
             <div class="ad bg-white border-start d-flex justify-content-center align-items-center" style="height: 100px;">Bottom-AD Section</div>
             <div class="bg-dark text-white py-3">
                 <p class="mb-0">© 2025 SuperMiner.com | 
-                <a href="<?php echo AFFILIATE_AMAZON; ?>" class="text-white">Buy on Amazon</a> | 
-                <a href="<?php echo AFFILIATE_NEWEGG; ?>" class="text-white">Buy on Newegg</a>
+                <a href="<?php echo htmlspecialchars(httpUrlOrHash(AFFILIATE_AMAZON), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); ?>" class="text-white">Buy on Amazon</a> | 
+                <a href="<?php echo htmlspecialchars(httpUrlOrHash(AFFILIATE_NEWEGG), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); ?>" class="text-white">Buy on Newegg</a>
             </p>
             </div>    
         </footer>
