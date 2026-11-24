@@ -1,9 +1,9 @@
 <?php
 /**
- * Coin links are copied from the WhatToMine cache into href and data-href.
- * Only an http(s) URL without spaces, quotes, or brackets is safe to emit.
- * Anything else becomes "#" so a javascript: link or a broken-out attribute
- * cannot run from that cache.
+ * Coin links from the WhatToMine cache, and affiliate footer URLs from .env,
+ * are copied into href and data-href. Only an http(s) URL without spaces,
+ * quotes, or brackets is safe to emit. Anything else becomes "#" so a
+ * javascript: link or a broken-out attribute cannot run from that value.
  *
  * @param mixed $link
  * @return string
