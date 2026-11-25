@@ -47,3 +47,6 @@ jobs:
 
       - name: Coin display test
         run: php tests/coin_display_test.php
+
+      - name: Coin cache refresh test
+        run: php tests/coin_cache_refresh_test.php

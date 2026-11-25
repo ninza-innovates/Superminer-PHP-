@@ -4,6 +4,8 @@ require_once 'config.php';
 
 /**
  * Fetches mining profitability data for top 10 coins and caches it.
+ * A failed refresh keeps a saved coin list and renews its timer.
+ * The built-in list is used only when the cache file is missing or not a list.
  * @param bool $forceRefresh Force a fresh API call
  * @return array Coin data
  */
@@ -15,8 +17,7 @@ function fetchMiningData($forceRefresh = false) {
     // A fresh file that is not a coin list used to return null and warn on
     // the home page. Keep the file until the TTL expires, and render nothing.
     if (!$forceRefresh && file_exists($cacheFile) && (time() - filemtime($cacheFile)) < $cacheTime) {
-        $raw = is_readable($cacheFile) ? file_get_contents($cacheFile) : false;
-        $cached = is_string($raw) ? json_decode($raw, true) : null;
+        $cached = readCachedCoins($cacheFile);
         return is_array($cached) ? $cached : [];
     }
 
@@ -28,25 +29,59 @@ function fetchMiningData($forceRefresh = false) {
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
-    if ($data === false || $httpCode !== 200) {
-        // Fallback to hardcoded data
-        $fallback = whattomineFallbackCoins();
-        file_put_contents($cacheFile, json_encode($fallback, JSON_PRETTY_PRINT));
-        return $fallback;
+    return applyMiningResponse($cacheFile, $data, $httpCode);
+}
+
+/**
+ * Saved coin list, or null when the file is missing or not a JSON list.
+ *
+ * @param string $cacheFile
+ * @return array|null
+ */
+function readCachedCoins($cacheFile) {
+    if (!is_readable($cacheFile)) {
+        return null;
+    }
+    $raw = file_get_contents($cacheFile);
+    if (!is_string($raw)) {
+        return null;
+    }
+    $cached = json_decode($raw, true);
+    return is_array($cached) ? $cached : null;
+}
+
+/**
+ * Store a WhatToMine response.
+ * HTTP 200 with a coin list replaces the cache.
+ * Any other result keeps a saved list and renews the 60-second timer.
+ * The built-in list is written only when there is no saved list.
+ *
+ * @param string $cacheFile
+ * @param mixed $data Response body, or false when the request did not complete
+ * @param mixed $httpCode
+ * @return array
+ */
+function applyMiningResponse($cacheFile, $data, $httpCode) {
+    if ($httpCode === 200 && is_string($data)) {
+        $json = json_decode($data, true);
+        if (is_array($json) && isset($json['coins']) && is_array($json['coins'])) {
+            $coins = selectTopCoins($json['coins']);
+            file_put_contents($cacheFile, json_encode($coins, JSON_PRETTY_PRINT));
+            return $coins;
+        }
     }
 
-    $json = json_decode($data, true);
-    if (!is_array($json) || !isset($json['coins']) || !is_array($json['coins'])) {
-        $fallback = whattomineFallbackCoins();
-        file_put_contents($cacheFile, json_encode($fallback, JSON_PRETTY_PRINT));
-        return $fallback;
+    $cached = readCachedCoins($cacheFile);
+    if (is_array($cached)) {
+        // Keep the saved bytes, but move the timer forward so later requests
+        // do not wait on WhatToMine again during an outage.
+        touch($cacheFile);
+        return $cached;
     }
 
-    $coins = selectTopCoins($json['coins']);
-
-    // Cache the fresh data
-    file_put_contents($cacheFile, json_encode($coins, JSON_PRETTY_PRINT));
-    return $coins;
+    $fallback = whattomineFallbackCoins();
+    file_put_contents($cacheFile, json_encode($fallback, JSON_PRETTY_PRINT));
+    return $fallback;
 }
 
 /**
