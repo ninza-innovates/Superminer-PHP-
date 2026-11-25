@@ -38,7 +38,7 @@ php -S localhost:8080 -t public
 | http://localhost:8080/calculator.php | ROI form. Profitability comes from `config/coins.json`. A hardware preset fills hash rate and watts from `config/hardware.json`. Submit to print estimated daily profit. The server only calculates when the coin is listed and hash rate, power cost, wattage, and hardware cost are positive numbers. |
 | http://localhost:8080/api/coins.php | Forces a refresh and returns JSON with `data` and `timestamp`. |
 
-`includes/api.php` defines `fetchMiningData()`. Executing that file on its own loads the function and exits. Refresh the cache by opening the home page or `/api/coins.php`. When the WhatToMine request fails or returns a status other than 200, the function writes a small built-in coin list into `config/coins.json`.
+`includes/api.php` defines `fetchMiningData()`. Executing that file on its own loads the function and exits. Refresh the cache by opening the home page or `/api/coins.php`. When that request fails, or the body has no coin list, a `config/coins.json` that already decodes to a list stays on disk, its 60-second timer is renewed, and that list is returned. The built-in coin list is written when the file is missing or does not decode to a list.
 
 To run the same syntax check as CI:
 
@@ -68,6 +68,12 @@ CI also checks that a refresh keeps the ten highest WhatToMine profitability sco
 
 ```bash
 php tests/top_coins_test.php
+```
+
+CI also checks that a failed WhatToMine refresh keeps a saved coin list:
+
+```bash
+php tests/coin_cache_refresh_test.php
 ```
 
 ## Configuration
