@@ -48,5 +48,13 @@ jobs:
       - name: Coin display test
         run: php tests/coin_display_test.php
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Coin poll format test
+        run: node tests/coin_poll_format_test.js
+
       - name: Coin cache refresh test
         run: php tests/coin_cache_refresh_test.php

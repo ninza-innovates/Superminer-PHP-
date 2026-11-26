@@ -64,6 +64,12 @@ CI also checks that the top-coins page still renders when the cache is invalid o
 php tests/coin_display_test.php
 ```
 
+CI also checks that the live coin poll keeps the home page's profitability and difficulty text:
+
+```bash
+node tests/coin_poll_format_test.js
+```
+
 CI also checks that a refresh keeps the ten highest WhatToMine profitability scores:
 
 ```bash
