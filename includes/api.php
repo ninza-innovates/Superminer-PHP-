@@ -53,7 +53,7 @@ function readCachedCoins($cacheFile) {
 /**
  * Store a WhatToMine response.
  * HTTP 200 with a coin list replaces the cache.
- * Any other result keeps a saved list and renews the 60-second timer.
+ * A list that cannot be encoded, or any other result, keeps a saved list and renews the 60-second timer.
  * The built-in list is written only when there is no saved list.
  *
  * @param string $cacheFile
@@ -66,8 +66,13 @@ function applyMiningResponse($cacheFile, $data, $httpCode) {
         $json = json_decode($data, true);
         if (is_array($json) && isset($json['coins']) && is_array($json['coins'])) {
             $coins = selectTopCoins($json['coins']);
-            file_put_contents($cacheFile, json_encode($coins, JSON_PRETTY_PRINT));
-            return $coins;
+            // json_encode() returns false for non-finite numbers. Writing that
+            // false value blanks coins.json, so keep the saved list instead.
+            $encoded = json_encode($coins, JSON_PRETTY_PRINT);
+            if (is_string($encoded)) {
+                file_put_contents($cacheFile, $encoded);
+                return $coins;
+            }
         }
     }
 
@@ -85,8 +90,60 @@ function applyMiningResponse($cacheFile, $data, $httpCode) {
 }
 
 /**
+ * Path segment for a WhatToMine coin URL. It must be letters and digits;
+ * anything else yields null so a missing or nested tag cannot throw or build a broken link.
+ *
+ * @param mixed $value
+ * @return string|null
+ */
+function whattomineSlug($value) {
+    if (!is_string($value) || preg_match('/\A[A-Za-z0-9]+\z/', $value) !== 1) {
+        return null;
+    }
+    return strtolower($value);
+}
+
+/**
+ * Coin page URL, or null when id, tag, or algorithm is not a safe path segment.
+ *
+ * @param array $info
+ * @return string|null
+ */
+function whattomineCoinLink($info) {
+    $id = $info['id'] ?? null;
+    if (is_int($id) && $id >= 0) {
+        $idPart = (string) $id;
+    } elseif (is_string($id) && preg_match('/\A[0-9]+\z/', $id) === 1) {
+        $idPart = $id;
+    } else {
+        return null;
+    }
+    $tag = whattomineSlug($info['tag'] ?? null);
+    $algorithm = whattomineSlug($info['algorithm'] ?? null);
+    if ($tag === null || $algorithm === null) {
+        return null;
+    }
+    return WHATTOMINE_URL . '/coins/' . $idPart . '-' . $tag . '-' . $algorithm;
+}
+
+/**
+ * Non-finite floats cannot be JSON-encoded. Storing them used to make
+ * json_encode() fail and wipe the coin cache, so they become null.
+ *
+ * @param mixed $value
+ * @return mixed
+ */
+function finiteCoinStat($value) {
+    if (is_float($value) && !is_finite($value)) {
+        return null;
+    }
+    return $value;
+}
+
+/**
  * WhatToMine lists coins in feed order, not by profitability.
  * Rank by that score and keep the highest ones.
+ * A coin with a bad id, tag, or algorithm stays in the list with a null link.
  * Stored profitability stays estimated_rewards, which the pages already display.
  *
  * @param array $apiCoins Coin name => WhatToMine coin object
@@ -100,9 +157,16 @@ function selectTopCoins($apiCoins, $limit = 10) {
             continue;
         }
         $score = $info['profitability'] ?? 0;
+        if (is_string($score)) {
+            $score = trim($score);
+        }
+        $score = is_numeric($score) ? (float) $score : 0.0;
+        if (!is_finite($score)) {
+            $score = 0.0;
+        }
         $ranked[] = [
             'name' => $coin,
-            'score' => is_numeric($score) ? (float) $score : 0,
+            'score' => $score,
             'info' => $info,
         ];
     }
@@ -115,9 +179,9 @@ function selectTopCoins($apiCoins, $limit = 10) {
     foreach (array_slice($ranked, 0, $limit) as $row) {
         $info = $row['info'];
         $coins[$row['name']] = [
-            'link' => WHATTOMINE_URL."/coins/".$info['id']."-".strtolower($info['tag'])."-".strtolower($info['algorithm']),
-            'profitability' => $info['estimated_rewards'] ?? 0,
-            'difficulty' => $info['difficulty'] ?? 0
+            'link' => whattomineCoinLink($info),
+            'profitability' => finiteCoinStat($info['estimated_rewards'] ?? 0),
+            'difficulty' => finiteCoinStat($info['difficulty'] ?? 0)
         ];
     }
     return $coins;

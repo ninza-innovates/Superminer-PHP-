@@ -144,6 +144,47 @@ with_cache($saved, function ($file) {
     assert_same(file_get_contents($file), json_encode([], JSON_PRETTY_PRINT), 'empty coin list was not stored');
 });
 
+// A nested tag used to throw and skip the saved-list fallback. An overflowing
+// number used to make json_encode() fail and blank the cache file.
+$malformedBody = json_encode([
+    'coins' => [
+        'BadTag' => [
+            'id' => 9,
+            'tag' => ['nope'],
+            'algorithm' => 'Sha',
+            'profitability' => 1000,
+            'estimated_rewards' => '9',
+            'difficulty' => 4,
+        ],
+        'Ok' => [
+            'id' => 2,
+            'tag' => 'OK',
+            'algorithm' => 'Sha',
+            'profitability' => 5,
+            'estimated_rewards' => '0.5',
+            'difficulty' => 3,
+        ],
+    ],
+]);
+$overflowBody = '{"coins":{"Huge":{"id":1,"tag":"H","algorithm":"Sha","profitability":1e309,"estimated_rewards":1e309,"difficulty":1e309},"Ok":{"id":2,"tag":"OK","algorithm":"Sha","profitability":5,"estimated_rewards":"0.5","difficulty":3}}}';
+
+with_cache($saved, function ($file) use ($saved, $malformedBody, $overflowBody) {
+    $coins = applyMiningResponse($file, $malformedBody, 200);
+    $raw = file_get_contents($file);
+    assert_same($coins, selectTopCoins(json_decode($malformedBody, true)['coins']), 'malformed coin aborted the refresh');
+    assert_same($raw, json_encode($coins, JSON_PRETTY_PRINT), 'malformed coin did not store the ranked list');
+    assert_same($coins['BadTag']['link'], null, 'nested tag was written into the cache as a link');
+    assert_true($raw !== '' && $raw !== $saved, 'malformed refresh left the previous cache or blanked the file');
+
+    $overflow = applyMiningResponse($file, $overflowBody, 200);
+    $overflowRaw = file_get_contents($file);
+    assert_true($overflowRaw !== '' && json_decode($overflowRaw, true) === $overflow, 'overflowing coin blanked the cache');
+    assert_same(array_keys($overflow), ['Ok', 'Huge'], 'overflowing score outranked a real coin');
+    assert_same($overflow['Huge']['profitability'], null, 'overflowing reward was stored');
+    assert_same($overflow['Huge']['difficulty'], null, 'overflowing difficulty was stored');
+    assert_same($overflow['Ok']['link'], WHATTOMINE_URL . '/coins/2-ok-sha', 'valid coin link was dropped after an overflow');
+});
+
 $fallback = whattomineFallbackCoins();
 $fallbackRaw = json_encode($fallback, JSON_PRETTY_PRINT);
 
