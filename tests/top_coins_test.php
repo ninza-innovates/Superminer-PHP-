@@ -15,6 +15,13 @@ require_once $root . '/includes/api.php';
 
 $failed = false;
 
+set_error_handler(function ($severity, $message, $file, $line) {
+    if (!(error_reporting() & $severity)) {
+        return false;
+    }
+    throw new ErrorException($message, 0, $severity, $file, $line);
+});
+
 function assert_true($condition, $message) {
     global $failed;
     if (!$condition) {
@@ -74,6 +81,50 @@ assert_true(
     $selected['Conceal']['link'] === WHATTOMINE_URL . '/coins/305-ccx-cryptonightgpu',
     'coin link was ' . $selected['Conceal']['link']
 );
+
+// A nested tag used to throw from strtolower() and abort the whole refresh.
+// A non-finite score ranks as zero. A bad tag or algorithm stores a null link.
+$broken = selectTopCoins([
+    'BadTag' => [
+        'id' => 9,
+        'tag' => ['nope'],
+        'algorithm' => 'Sha',
+        'profitability' => 50,
+        'estimated_rewards' => '1.5',
+        'difficulty' => 3,
+    ],
+    'Missing' => [
+        'profitability' => 40,
+        'estimated_rewards' => '2',
+    ],
+    'Huge' => [
+        'id' => 1,
+        'tag' => 'H',
+        'algorithm' => 'Sha',
+        'profitability' => INF,
+        'estimated_rewards' => INF,
+        'difficulty' => NAN,
+    ],
+    'Spaced' => [
+        'id' => 6,
+        'tag' => 'OK COIN',
+        'algorithm' => 'Sha',
+        'profitability' => 30,
+        'estimated_rewards' => '1',
+        'difficulty' => 1,
+    ],
+    'Ok' => coin(4, 'OK', 'Sha', 10, 0.5),
+]);
+assert_true(array_keys($broken) === ['BadTag', 'Missing', 'Spaced', 'Ok', 'Huge'], 'malformed coins sorted as ' . implode(', ', array_keys($broken)));
+assert_true($broken['BadTag']['link'] === null, 'nested tag still built a link');
+assert_true($broken['Missing']['link'] === null, 'missing id still built a link');
+assert_true($broken['Spaced']['link'] === null, 'tag with a space still built a link');
+assert_true($broken['Huge']['link'] === WHATTOMINE_URL . '/coins/1-h-sha', 'finite id and tag should still build a link');
+assert_true($broken['Huge']['profitability'] === null, 'non-finite reward should be stored as null');
+assert_true($broken['Huge']['difficulty'] === null, 'non-finite difficulty should be stored as null');
+assert_true($broken['Ok']['link'] === WHATTOMINE_URL . '/coins/4-ok-sha', 'valid coin link changed');
+assert_true($broken['Ok']['profitability'] === 0.5, 'valid coin reward changed');
+assert_true(json_encode($broken) !== false, 'malformed coin list is not JSON');
 
 if ($failed) {
     exit(1);
