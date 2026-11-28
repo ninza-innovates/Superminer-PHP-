@@ -157,6 +157,70 @@ assert_true(positiveCalculatorNumber('  ') === null, 'blank numbers should be re
 assert_true(calculatorCoinProfit(['Missing' => ['difficulty' => 1]], 'Missing') === null, 'coin without profitability should be rejected');
 assert_true(calculatorCoinProfit(['Zero' => ['profitability' => '0']], 'Zero') === 0.0, 'a listed zero reward is still a number');
 assert_true(readConfigJson($root . '/config/does-not-exist.json') === [], 'missing config JSON should be an empty list');
+assert_true(hardwarePresetNumber(50) === '50', 'int preset number should stay a digit string');
+assert_true(hardwarePresetNumber(64.5) === '64.5', 'float preset number should stay decimal');
+assert_true(hardwarePresetNumber(' 75 ') === '75', 'padded preset number should be trimmed');
+assert_true(hardwarePresetNumber(['value' => 10]) === null, 'array preset number should be rejected');
+assert_true(hardwarePresetNumber(INF) === null, 'infinite preset number should be rejected');
+assert_true(hardwarePresetNumber('INF') === null, 'INF string should be rejected');
+assert_true(hardwarePresetNumber('100 MH/s') === null, 'preset number with a unit should be rejected');
+
+$hardwareFile = $root . '/config/hardware.json';
+$originalHardware = file_get_contents($hardwareFile);
+if ($originalHardware === false) {
+    fwrite(STDERR, "Could not read config/hardware.json\n");
+    exit(1);
+}
+$malformedHardware = json_encode([
+    'OK GPU' => ['hashRate' => 50, 'powerUsage' => 120],
+    'Nested GPU' => ['hashRate' => ['value' => 10], 'powerUsage' => 80],
+    'NotAPreset' => 'skip',
+    'Text Rate' => ['hashRate' => "100\n200", 'powerUsage' => '90'],
+    'Spaced' => ['hashRate' => ' 75 ', 'powerUsage' => 80],
+], JSON_PRETTY_PRINT);
+if ($malformedHardware === false || file_put_contents($hardwareFile, $malformedHardware) === false) {
+    fwrite(STDERR, "Could not write malformed hardware.json\n");
+    exit(1);
+}
+set_error_handler(function ($severity, $message, $file, $line) {
+    if (!(error_reporting() & $severity)) {
+        return false;
+    }
+    throw new ErrorException($message, 0, $severity, $file, $line);
+});
+try {
+    $_SERVER['REQUEST_METHOD'] = 'GET';
+    $_POST = [];
+    try {
+        $malformedPage = render_calculator();
+    } catch (Throwable $e) {
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        $malformedPage = '';
+        assert_true(false, 'malformed hardware preset crashed the calculator: ' . $e->getMessage());
+    }
+    assert_true(strpos($malformedPage, 'ROI Calculator') !== false, 'malformed hardware dropped the calculator');
+    $okPreset = option_tag($malformedPage, 'OK GPU');
+    assert_true(strpos($okPreset, 'data-hash-rate="50"') !== false, 'valid preset hash rate was dropped');
+    assert_true(strpos($okPreset, 'data-power-usage="120"') !== false, 'valid preset wattage was dropped');
+    $nested = option_tag($malformedPage, 'Nested GPU');
+    assert_true($nested !== '', 'preset with a nested hash rate was dropped');
+    assert_true(strpos($nested, 'data-hash-rate=') === false, 'nested hash rate was still written');
+    assert_true(strpos($nested, 'data-power-usage="80"') !== false, 'valid wattage on a nested preset was dropped');
+    assert_true(strpos($malformedPage, 'data-hash-rate="Array"') === false, 'nested hash rate was cast to Array');
+    assert_true(strpos($malformedPage, 'NotAPreset') === false, 'non-array hardware entry was rendered');
+    assert_true(strpos($malformedPage, "100\n200") === false, 'hash rate with a newline was rendered');
+    $textRate = option_tag($malformedPage, 'Text Rate');
+    assert_true($textRate !== '' && strpos($textRate, 'data-hash-rate=') === false, 'non-numeric hash rate was written');
+    assert_true(strpos($textRate, 'data-power-usage="90"') !== false, 'numeric wattage string was dropped');
+    $spaced = option_tag($malformedPage, 'Spaced');
+    assert_true(strpos($spaced, 'data-hash-rate="75"') !== false, 'padded hash rate was not trimmed');
+    assert_true(strpos($spaced, 'data-power-usage="80"') !== false, 'int wattage on a padded preset was dropped');
+} finally {
+    restore_error_handler();
+    file_put_contents($hardwareFile, $originalHardware);
+}
 
 if ($failed) {
     exit(1);

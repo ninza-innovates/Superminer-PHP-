@@ -58,6 +58,39 @@ function positiveCalculatorNumber($raw) {
 }
 
 /**
+ * Hash rate or wattage from a hardware preset, safe to copy into the form.
+ * Nested values used to cast to "Array" and warn, which aborted the page
+ * when warnings are exceptions. Only a finite number is returned.
+ *
+ * @param mixed $value
+ * @return string|null
+ */
+function hardwarePresetNumber($value) {
+    if (is_int($value)) {
+        return (string) $value;
+    }
+    if (is_float($value)) {
+        if (!is_finite($value)) {
+            return null;
+        }
+        $text = rtrim(rtrim(sprintf('%.10F', $value), '0'), '.');
+        return ($text === '' || $text === '-') ? '0' : $text;
+    }
+    if (!is_string($value)) {
+        return null;
+    }
+    $value = trim($value);
+    if ($value === '' || !is_numeric($value)) {
+        return null;
+    }
+    $number = (float) $value;
+    if (!is_finite($number)) {
+        return null;
+    }
+    return $value;
+}
+
+/**
  * Profitability for a coin the calculator actually lists.
  * Cached rewards are often numeric strings, so those are accepted.
  *

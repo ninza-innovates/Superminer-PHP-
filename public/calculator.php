@@ -103,7 +103,14 @@ if ($isPost) {
                         <select name="hardware" id="hardware" class="form-select">
                             <option value="">Custom</option>
                             <?php foreach ($hardware as $name => $spec): ?>
-                                <option value="<?php echo htmlspecialchars($name, ENT_QUOTES); ?>" data-hash-rate="<?php echo htmlspecialchars((string) ($spec['hashRate'] ?? ''), ENT_QUOTES); ?>" data-power-usage="<?php echo htmlspecialchars((string) ($spec['powerUsage'] ?? ''), ENT_QUOTES); ?>"<?php echo $fields['hardware'] === $name ? ' selected' : ''; ?>><?php echo htmlspecialchars($name); ?></option>
+                                <?php
+                                if (!is_array($spec)) {
+                                    continue;
+                                }
+                                $presetHash = hardwarePresetNumber($spec['hashRate'] ?? null);
+                                $presetWatts = hardwarePresetNumber($spec['powerUsage'] ?? null);
+                                ?>
+                                <option value="<?php echo htmlspecialchars($name, ENT_QUOTES); ?>"<?php if ($presetHash !== null): ?> data-hash-rate="<?php echo htmlspecialchars($presetHash, ENT_QUOTES); ?>"<?php endif; ?><?php if ($presetWatts !== null): ?> data-power-usage="<?php echo htmlspecialchars($presetWatts, ENT_QUOTES); ?>"<?php endif; ?><?php echo $fields['hardware'] === $name ? ' selected' : ''; ?>><?php echo htmlspecialchars($name); ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
